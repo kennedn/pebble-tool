@@ -8,21 +8,22 @@ import socket
 import time
 from six.moves.urllib import parse as urlparse
 import webbrowser
-
+import tempfile
 from .phone_sensor import SENSOR_PAGE_HTML
 
 
 logger = logging.getLogger("pebble_tool.util.browser")
-
 class BrowserController(object):
     def __init__(self):
         self.port = None
-
     def open_config_page(self, url, callback):
         self.port = port = self._choose_port()
         url = self.url_append_params(url, {'return_to': 'http://localhost:{}/close?'.format(port)})
-        webbrowser.open_new(url)
-        self.serve_page(port, callback)
+        with tempfile.NamedTemporaryFile(suffix = '.html') as tmp:
+          tmp.write('<meta http-equiv="refresh" content="0;url={}"/>'.format(url))
+          tmp.flush()
+          webbrowser.open(tmp.name)
+          self.serve_page(port, callback)
 
     def serve_page(self, port, callback):
         # This is an array so AppConfigHandler doesn't create an instance variable when trying to set the state to False
